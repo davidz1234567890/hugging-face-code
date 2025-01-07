@@ -13,16 +13,23 @@ model = AutoModelForCausalLM.from_pretrained(
     cache_dir="/kaggle/working/",
     device_map="auto",
 )'''
-
-from transformers import AutoTokenizer, FlaxLlamaForCausalLM
-
+import torch
 model_id = "meta-llama/Llama-3.1-8B-Instruct"
-
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-model = FlaxLlamaForCausalLM.from_pretrained(model_id)
-
-inputs = tokenizer("Hello, my dog is cute", return_tensors="np")
-outputs = model(**inputs)
-
-# retrieve logts for next token
-next_token_logits = outputs.logits[:, -1]
+from transformers import logging
+logging.set_verbosity_debug()
+from transformers import LlamaModel,AutoModelForCausalLM
+#model = LlamaModel.from_pretrained("distilbert-base-uncased")
+print("hello")
+try:
+    print("inside try")
+    model = AutoModelForCausalLM.from_pretrained(model_id, \
+                                       device_map = 'cpu', \
+                                               torch_dtype=torch.bfloat16, \
+    low_cpu_mem_usage=True)
+    ''', \
+                                       return_dict_in_generate = True, \
+                                       output_hidden_states=True, \
+                                       output_attentions=True)'''
+    print("Model loaded successfully by David")
+except Exception as e:
+    print(f"Error loading model: {e}")
