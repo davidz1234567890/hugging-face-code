@@ -99,8 +99,10 @@ for ii in range(len(tasks)):
 
     if ii == 0:
         hidden_logical = hidden_states
+        outputs_logical = outputs
     elif ii == 1:
         hidden_language = hidden_states
+        outputs_language = outputs
     print(f"Hidden States Shape (Last Layer): {hidden_states[-1].shape}")
 
     for i in range(len(hidden_states)):
@@ -156,6 +158,13 @@ with open('attentions_logical.pkl', 'wb') as bb:
 
 with open('attentions_language.pkl', 'wb') as cc:
     pickle.dump(attentions_language, cc)
+
+
+with open('outputs_logical.pkl', 'wb') as dd:
+    pickle.dump(outputs_logical, dd)
+
+with open('outputs_language.pkl', 'wb') as eee:
+    pickle.dump(outputs_language, eee)
 
 
 print("Variable saved successfully.")
