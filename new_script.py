@@ -22,112 +22,72 @@ with open('outputs_logical.pkl', 'rb') as f:
 with open('outputs_language.pkl', 'rb') as f:
     outputs_language = pickle.load(f)
 
-def get_most_active_nodes(hidden_states, top_n=5):
-    most_active_nodes = {}
-    for layer_idx, layer_hidden_state in enumerate(hidden_states):
-        # Sum the activations across the sequence length
-        summed_activations = layer_hidden_state.sum(dim=1)
-        # Find the top N most active neurons
-        _, top_neurons = torch.topk(summed_activations, top_n, dim=1)
-        most_active_nodes[layer_idx] = top_neurons.cpu().numpy()
-    return most_active_nodes
+# Assume `hidden_states` is a tensor of shape (batch_size, sequence_length, hidden_size)
+# For instance, the hidden states from layer `n` can be obtained like this:
+# hidden_states = outputs.hidden_states[layer_number]
 
-most_active_logical = get_most_active_nodes(hidden_logical)
-most_active_language = get_most_active_nodes(hidden_language)
+# Access hidden state of the first token in the first sequence
+batch_index = 0  # First sequence in the batch
+token_index = 0  # First token in the sequence
+hidden_index = 10  # Node (neuron) index in the hidden size dimension
 
+print(type(hidden_logical[-1]))
+print(len(hidden_logical[-1]))
+# Access the specific node
+for i in range(len(hidden_logical)):
+    specific_node_value = hidden_logical[-1][batch_index, token_index, hidden_index]
+    print(f"Value of the specific node: {specific_node_value}")
 
-def compare_activation_patterns(logical_activations, language_activations):
-    unique_logical = {}
-    unique_language = {}
-    common_activations = {}
+node_values = []
+for layer_idx, layer_hidden_state in enumerate(hidden_logical):
+    # Extract the specific node value from the current layer
+    node_value = layer_hidden_state[batch_index, token_index, hidden_index].item()
+    node_values.append(node_value)
 
-    for layer in logical_activations.keys():
-        logical_neurons = set(logical_activations[layer].flatten())
-        language_neurons = set(language_activations[layer].flatten())
+# Plot the values across layers
+plt.figure(figsize=(8, 5))
+plt.plot(range(len(hidden_logical)), node_values, marker="o", color="b", label=f"Node {hidden_index}")
+plt.title(f"Activation of Node {hidden_index} Across Layers for Token Index {token_index}")
+plt.xlabel("Layer Index")
+plt.ylabel("Node Activation Value")
+plt.grid(True)
+plt.legend()
+plt.show()
 
-        unique_logical[layer] = logical_neurons - language_neurons
-        unique_language[layer] = language_neurons - logical_neurons
-        common_activations[layer] = logical_neurons & language_neurons
-
-    return unique_logical, unique_language, common_activations
-
-unique_logical, unique_language, common_activations = \
-        compare_activation_patterns(most_active_logical, most_active_language)
-
-def plot_activations(unique_logical, unique_language, common_activations):
-    layers = list(unique_logical.keys())
-
-    unique_logical_count = [len(unique_logical[layer]) for layer in layers]
-    unique_language_count = [len(unique_language[layer]) for layer in layers]
-    common_count = [len(common_activations[layer]) for layer in layers]
-
-    print(unique_logical_count)
-    print(unique_language_count)
-    print(common_count)
-    plt.figure(figsize=(12, 6))
-    plt.plot(layers, unique_logical_count, 
-        label='Unique Logical Activations', marker='o')
-    plt.plot(layers, unique_language_count, 
-        label='Unique Language Activations', marker='o')
-    plt.plot(layers, common_count, label='Common Activations', marker='o')
-    plt.xlabel('Layer')
-    plt.ylabel('Number of Neurons')
-    plt.title('Activation Patterns Across Layers')
-    plt.legend()
-    plt.show()
-
-#plot_activations(unique_logical, unique_language, common_activations)
-# Function to plot attention heatmaps
-def plot_attention_maps(attention_data, title_prefix):
-    num_layers = len(attention_data)
-    num_heads = attention_data[0].shape[0]
-    
-    for l in range(num_layers):
-        for h in range(num_heads):
-            plt.figure(figsize=(10, 8))
-            plt.imshow(attention_data[l][h].to(torch.float32).detach().numpy(), 
-                       cmap='viridis')
-            plt.colorbar()
-            plt.title(f"{title_prefix} - Layer {l + 1}, Head {h + 1}")
-            plt.xlabel('Sequence Position')
-            plt.ylabel('Sequence Position')
-            plt.show()
-
-# Plot attention maps for logical prompts
-#plot_attention_maps(attentions_logical, "Logical Attention")
-
-# Plot attention maps for language prompts
-#plot_attention_maps(attentions_language, "Language Attention")
-
-# Example: Visualizing attention weights for logical task
-def plot_attention_heatmaps(attentions, title_prefix="Attention Weights"):
-    num_layers = len(attentions)
+# Function to plot activation maps
+def plot_activation_maps(activations, title_prefix="Neuron Activations"):
+    num_layers = len(activations)
     for layer in range(num_layers):
-        attention_weights = attentions[layer]
-        attention_weights = attention_weights.to(torch.float32).detach().numpy()
-        print(f"shape is {attention_weights.shape}")
-        # Assuming attention_weights is a 2D numpy array 
-        # with shape [num_heads, sequence_length]
+        activation_data = activations[layer]
+        activation_data = activation_data.to(torch.float32).detach().numpy()
 
-        if attention_weights.ndim == 3:
-            print("enter-------------------------------------")
-            attention_weights = attention_weights[0]  # Select the first batch
-            # Optionally, average over all heads for visualization
-            #attention_weights = np.mean(attention_weights, axis=0)  
-            # Average over heads
+        # Ensure activation_data is 2D for plotting
+        if activation_data.ndim == 3:
+            # Assuming shape is (batch_size, sequence_length, hidden_size)
+            activation_data = np.mean(activation_data, axis=1)  # Average over sequence length
+
+        print(f"Shape of activations for layer{layer+1}:{activation_data.shape}")
 
         plt.figure(figsize=(10, 8))
-        plt.imshow(attention_weights, cmap='viridis', aspect='auto')
+        plt.imshow(activation_data.T, cmap='viridis', aspect='auto')
         plt.colorbar()
         plt.title(f"{title_prefix} - Layer {layer+1}")
-        plt.xlabel("Sequence Position")
-        plt.ylabel("Attention Heads")
+        plt.xlabel("Sample Index")
+        plt.ylabel("Neuron Index")
         plt.show()
 
-# Example: Plot attention heatmaps for logical and language tasks
-plot_attention_heatmaps(attentions_logical, 
-                        title_prefix="Logical Task Attention Weights")
-plot_attention_heatmaps(attentions_language, 
-                        title_prefix="Language Task Attention Weights")
+# Plot activation maps for logical and language inputs
+# plot_activation_maps(hidden_logical, 
+#                      title_prefix="Logical Input Neuron Activations")
+# plot_activation_maps(hidden_language, 
+#                      title_prefix="Language Input Neuron Activations")
+
+activated_hidden_states_logical = {}
+for layer_index in range(len(hidden_logical)):
+    activated_hidden_states_logical[layer_index] = \
+        torch.relu(hidden_logical[layer_index])
+
+print("here is activated hidden states logical: ")
+print(activated_hidden_states_logical)
 
 print("all clear")
