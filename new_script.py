@@ -41,18 +41,26 @@ for i in range(len(hidden_logical)):
 node_values = []
 for layer_idx, layer_hidden_state in enumerate(hidden_logical):
     # Extract the specific node value from the current layer
-    node_value = layer_hidden_state[batch_index, token_index, hidden_index].item()
-    node_values.append(node_value)
+    node_values = []
+    for j in range(4096):
+        node_value = layer_hidden_state[0,7,j].item()
+        node_values.append(node_value)
 
-# Plot the values across layers
-plt.figure(figsize=(8, 5))
-plt.plot(range(len(hidden_logical)), node_values, marker="o", color="b", label=f"Node {hidden_index}")
-plt.title(f"Activation of Node {hidden_index} Across Layers for Token Index {token_index}")
-plt.xlabel("Layer Index")
-plt.ylabel("Node Activation Value")
-plt.grid(True)
-plt.legend()
-plt.show()
+    #only the first layer
+    #break
+
+    # Plot the values across layers
+    plt.figure(figsize=(8, 5))
+    plt.plot(range(4096), node_values, marker="o", color="b", label=f"Node")
+    plt.title(f"Activation of Node Across First Layer For Logical Input")
+    plt.xlabel("Node #")
+    plt.ylabel("Node Activation Value")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+
+
 
 # Function to plot activation maps
 def plot_activation_maps(activations, title_prefix="Neuron Activations"):
