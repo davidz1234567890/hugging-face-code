@@ -6,24 +6,70 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 
-with open('hidden_logical.pkl', 'rb') as f:
-    hidden_logical = pickle.load(f)
 
-with open('hidden_language.pkl', 'rb') as f:
-    hidden_language = pickle.load(f)
 
-with open('attentions_logical.pkl', 'rb') as f:
-    attentions_logical = pickle.load(f)
 
-with open('attentions_language.pkl', 'rb') as f:
-    attentions_language = pickle.load(f)
+hidden_logical = {}
+attentions_logical = {}
+outputs_logical = {}
+for i in range(9):
+    with open(f'hidden_logical_attackinputs{i}.pkl', 'rb') as f:
+        hidden_logical[i] = pickle.load(f)
+    
+    
 
-with open('outputs_logical.pkl', 'rb') as f:
-    outputs_logical = pickle.load(f)
+    with open(f'attentions_logical_attackinputs{i}.pkl', 'rb') as f:
+        attentions_logical[i] = pickle.load(f)
 
-with open('outputs_language.pkl', 'rb') as f:
-    outputs_language = pickle.load(f)
+    
 
+    with open(f'outputs_logical_attackinputs{i}.pkl', 'rb') as f:
+        outputs_logical[i] = pickle.load(f)
+
+
+
+
+
+# Ensure each element is detached, converted to float32, and then to NumPy
+attn_logical_mean = {}
+attn_logical_avg = {}
+for i in range(9):
+    attentions_logical[i] = [
+        t.detach().to(torch.float32).numpy() if isinstance(t, torch.Tensor) else np.array(t)
+        for t in attentions_logical[i]
+    ]
+
+    # attentions_language[i] = [
+    #     t.detach().to(torch.float32).numpy() if isinstance(t, torch.Tensor) else np.array(t)
+    #     for t in attentions_language[i]
+    # ]
+
+    # Convert list of NumPy arrays into a single NumPy array
+    attentions_logical[i] = np.array(attentions_logical[i])
+    #attentions_language[i] = np.array(attentions_language)
+
+    # Assuming shape: (num_layers, num_heads, num_nodes, num_nodes)
+    # Aggregate across heads (e.g., mean over heads)
+    attn_logical_mean[i] = np.mean(attentions_logical[i], axis=1)  # Shape: (num_layers, num_nodes, num_nodes)
+    #attn_language_mean = np.mean(attentions_language, axis=1)
+
+    # Further reduce to get an overall activation per node (e.g., mean over key positions)
+    attn_logical_avg[i] = np.mean(attn_logical_mean[i], axis=-1)  # Shape: (num_layers, num_nodes)
+    #attn_language_avg = np.mean(attn_language_mean, axis=-1)
+
+# Function to plot heatmap
+def plot_heatmap(attn_data, title):
+    plt.figure(figsize=(10, 6))
+    sns.heatmap(attn_data.T, cmap="viridis", xticklabels=range(attn_data.shape[0]), yticklabels=range(attn_data.shape[1]))
+    plt.xlabel("Layer")
+    plt.ylabel("Node")
+    plt.title(title)
+    plt.show()
+
+
+
+
+#Plot heatmaps
 
 
 # Access hidden state of the first token in the first sequence
@@ -31,37 +77,15 @@ batch_index = 0  # First sequence in the batch
 token_index = 0  # First token in the sequence
 hidden_index = 10 
 
-print(type(hidden_logical[-1]))
-print(len(hidden_logical[-1]))
+print(type(hidden_logical[0][-1]))
+print(len(hidden_logical[0][-1]))
 
 
 # Access the specific node
-for i in range(len(hidden_logical)):
-    specific_node_value = hidden_logical[-1][batch_index, token_index, hidden_index]
-    print(f"Value of the specific node: {specific_node_value}")
-
-
-
-
-
-token_idx = 7  
-num_layers = len(hidden_language)  
-hidden_size = hidden_language[0].shape[-1]  # Number of nodes in each layer
-
-
-language_activations = np.zeros((num_layers, hidden_size)) 
-logical_activations = np.zeros((num_layers, hidden_size)) 
-
-
-for layer_idx in range(num_layers):
-    language_activations[layer_idx, :] = \
-        hidden_language[layer_idx][0, token_idx, :].to(torch.float32).detach().cpu().numpy()
-    logical_activations[layer_idx, :] = \
-        hidden_logical[layer_idx][0, token_idx, :].to(torch.float32).detach().cpu().numpy()
-
-
-
-
+# for i in range(len(hidden_logical)):
+#     specific_node_value = hidden_logical[-1][batch_index, token_index, hidden_index]
+#     print(f"Value of the specific node: {specific_node_value}")
+   
 
 
 
@@ -70,8 +94,9 @@ language_dict = {}
 for i in range(4096):
     language_dict[i] = 0
 
-y_min = -1
-y_max = 1
+
+
+'''
 with PdfPages("language_activations.pdf") as pdf:
     node_values = []
     for layer_idx, layer_hidden_state in enumerate(hidden_language):
@@ -85,29 +110,33 @@ with PdfPages("language_activations.pdf") as pdf:
             node_values.append(node_value)
 
         
-
-        # Plot the values across layers
         plt.figure(figsize=(8, 5))
         plt.plot(range(4096), node_values, marker="o", color="b", label=f"Node")
         plt.title(f"Activation of Node Across {layer_idx} Layer For Language Input")
         plt.xlabel("Node #")
         plt.ylabel("Node Activation Value")
         plt.grid(True)
-        plt.ylim(y_min, y_max)
+        plt.ylim(-1,1)
         plt.legend()
         pdf.savefig()
         plt.show()
+        break
+'''
+
 
 logical_dict = {}
 for i in range(4096):
     logical_dict[i] = 0
 
+'''
 with PdfPages("logical_activations.pdf") as pdf:
     node_values = []
+    
     for layer_idx, layer_hidden_state in enumerate(hidden_logical):
-
+        
         # Extract the specific node value from the current layer
         node_values = []
+        
         for j in range(4096):
             node_value = layer_hidden_state[0,7,j].item()
             logical_dict[j] += node_value
@@ -122,9 +151,57 @@ with PdfPages("logical_activations.pdf") as pdf:
         plt.xlabel("Node #")
         plt.ylabel("Node Activation Value")
         plt.grid(True)
-        plt.ylim(y_min, y_max)
+        plt.ylim(-1,1)
         plt.legend()
         pdf.savefig()
         plt.show()
+        break '''
 
+
+
+num_inputs = len(hidden_logical)
+with PdfPages("logical_attackinputs_activations.pdf") as pdf:
+    num_layers = len(hidden_logical[0])  # Number of layers (assumed same for all inputs)
+    num_nodes = 4096  # Number of nodes
+
+    for layer_idx in range(num_layers):
+        node_values = np.zeros((num_inputs, num_nodes))  # Store activations for each input
+
+        for input_idx in range(num_inputs):
+            layer_hidden_state = hidden_logical[input_idx][layer_idx]  # Extract current layer's hidden state
+            for j in range(num_nodes):
+                node_values[input_idx, j] = layer_hidden_state[0, 7, j].item()  # Store node activation
+        
+        # Compute statistics across inputs
+        mean_activations = np.mean(node_values, axis=0)
+        std_activations = np.std(node_values, axis=0)
+
+        # Plot mean and stddev
+        plt.figure(figsize=(8, 5))
+        plt.plot(range(num_nodes), mean_activations, marker="o", color="b", label="Mean Activation")
+        plt.fill_between(range(num_nodes), mean_activations - std_activations, 
+                         mean_activations + std_activations, color='r', alpha=0.2, label="Std Dev")
+        plt.title(f"Activation Statistics Across Inputs - Layer {layer_idx}")
+        plt.xlabel("Node #")
+        plt.ylabel("Activation Value")
+        plt.grid(True)
+        plt.ylim(-1, 1)
+        plt.legend()
+        pdf.savefig()
+        plt.close()
+
+with PdfPages("heatmap_attack1.pdf") as pdf:
+    for i in range(9):
+        plot_heatmap(np.mean(attn_logical_avg[i], axis=-1), "Logical Attention Heatmap")
+#assert(1==0)
+#plot_heatmap(attn_language_avg, "Language Attention Heatmap")
 print("finished")
+#run while sleeping
+#jailbreaking
+#logical tree, decode this logical tree
+#visualize figure 1
+
+#blackbox, whitebox LLM
+#attack: desired output and actual output minimize loss
+#train LLM against attack by finding the most significant nodes
+#see how heatmap changes with different attacks
