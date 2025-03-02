@@ -198,3 +198,10 @@ for i in range(len(hidden_logical)):
 print("Variable saved successfully.")
 
 print("no issues, arrived at the end of program")
+
+
+
+#mean and var for successful attacks
+#mean and var for unsuccessful attacks
+#50 successful attacks
+#50 unsuccessful attacks 
