@@ -28,26 +28,27 @@ hf_dataset = kagglehub.load_dataset(
   # https://github.com/Kaggle/kagglehub/blob/main/README.md#kaggledatasetadapterhugging_face
 )
 
-print("Hugging Face Dataset:", hf_dataset)
+
 
 df = hf_dataset.to_pandas()
-bt2_questions = df[df['Category'] == 'BT2']
+BT6_questions = df[df['Category'] == 'BT6']
 count = 0
-dictionary_bt2 = {}
+dictionary_BT6 = {}
 # Loop through the DataFrame and print each question
-for index, row in bt2_questions.iterrows():
-    print(f"Question {index + 1}: {row['Questions']}")
-    dictionary_bt2[count] = row['Questions']
-    count+=1
-    if(count==25): 
+for index, row in BT6_questions.iterrows():
+    #print(f"Question {index}: {row['Questions']}")
+    #if(index >= 100 and index < 125):
+    dictionary_BT6[count] = row['Questions']
+    
+    if(count==9): 
         break
+    count+=1
 
 print("dict")
-print(dictionary_bt2)
+print(dictionary_BT6)
 
 
-print(len(dictionary_bt2))
-
+print(len(dictionary_BT6))
 #print(ds.features.length)
 
 def analyze_activation_patterns_single_task(hidden_states, attentions, task_label):
@@ -110,19 +111,23 @@ model = AutoModelForCausalLM.from_pretrained(model_id,
         low_cpu_mem_usage=True,
         output_hidden_states=True, output_attentions=True)
 
+print("test")
+
 hidden_language = {}
 outputs_language = {}
 attentions_language = {}
 
-for ii in range(len(dictionary_bt2)):
+for ii in range(10):
 
     tokenizer=AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B-Instruct")
-    input_text = dictionary_bt2[ii]#"What is the capital of France?"
+    input_text = dictionary_BT6[ii]  
     inputs = tokenizer(input_text, return_tensors="pt")
 
     print(f"here is input text: {input_text}")
 
     tokenized_input = inputs["input_ids"]
+
+    
 
     tokens=tokenizer.convert_ids_to_tokens(tokenized_input.squeeze().tolist())
     print(f"Tokenized Input: {tokens}")
@@ -164,7 +169,8 @@ for ii in range(len(dictionary_bt2)):
 
     generated_ids = model.generate(
         inputs["input_ids"], 
-        max_length=20, 
+        #max_length=20, 
+        max_length = inputs["input_ids"].shape[1] + 20,
         temperature=0.7, 
         top_k=50, 
         top_p=0.9
@@ -176,32 +182,33 @@ for ii in range(len(dictionary_bt2)):
     generated_text = tokenizer.decode(generated_ids[0], max_length=20, 
                                     temperature=0.7, top_k=50, top_p=0.9)
     print(f"Output Text: {generated_text}")
-    if(ii==24): #previously 4
+
+    with open(f'hidden_language_BT6inputs{ii}.pkl', 'wb') as f:
+        pickle.dump(hidden_language[ii], f)
+
+    
+    with open(f'attentions_language_BT6inputs{ii}.pkl', 'wb') as bb:
+        pickle.dump(attentions_language[ii], bb)
+
+
+    with open(f'outputs_language_BT6inputs{ii}.pkl', 'wb') as dd:
+        pickle.dump(outputs_language[ii], dd)
+
+    if(ii==9): #previously 4
         break
     # analyze_activation_patterns_single_task(hidden_states, 
     #     attentions, 'logical')
     
 
 # Save the variable to a file
-for i in range(len(hidden_language)):
-    with open(f'hidden_language_bt2inputs{i}.pkl', 'wb') as f:
-        pickle.dump(hidden_language[i], f)
+#for i in range(len(hidden_language)):
+    
 
 # Save the variable to a file
 # with open('hidden_language.pkl', 'wb') as aa:
 #     pickle.dump(hidden_language, aa)
 
-# Save the variable to a file
-for i in range(len(hidden_language)):
-    with open(f'attentions_language_bt2inputs{i}.pkl', 'wb') as bb:
-        pickle.dump(attentions_language[i], bb)
 
-# with open('attentions_language.pkl', 'wb') as cc:
-#     pickle.dump(attentions_language, cc)
-
-for i in range(len(hidden_language)):
-    with open(f'outputs_language_bt2inputs{i}.pkl', 'wb') as dd:
-        pickle.dump(outputs_language[i], dd)
 
 # with open('outputs_language.pkl', 'wb') as eee:
 #     pickle.dump(outputs_language, eee)

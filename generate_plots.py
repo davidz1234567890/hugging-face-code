@@ -13,17 +13,20 @@ hidden_language = {}
 attentions_language = {}
 outputs_language = {}
 for i in range(25):
-    with open(f'hidden_language_bt2/hidden_language_bt2inputs{i}.pkl', 'rb') as f:
+    with open(f'hidden_language_bt2/hidden_language_bt2inputs{i}.pkl', 
+              'rb') as f:
         hidden_language[i] = pickle.load(f)
     
     
 
-    with open(f'attentions_language_bt2/attentions_language_bt2inputs{i}.pkl', 'rb') as f:
+    with open(f'attentions_language_bt2/attentions_language_bt2inputs{i}.pkl', 
+              'rb') as f:
         attentions_language[i] = pickle.load(f)
 
     
 
-    with open(f'outputs_language_bt2/outputs_language_bt2inputs{i}.pkl', 'rb') as f:
+    with open(f'outputs_language_bt2/outputs_language_bt2inputs{i}.pkl', 
+              'rb') as f:
         outputs_language[i] = pickle.load(f)
 
 
@@ -35,12 +38,14 @@ attn_language_mean = {}
 attn_language_avg = {}
 for i in range(25):
     attentions_language[i] = [
-        t.detach().to(torch.float32).numpy() if isinstance(t, torch.Tensor) else np.array(t)
+        t.detach().to(torch.float32).numpy() if isinstance(t, torch.Tensor) 
+                                        else np.array(t)
         for t in attentions_language[i]
     ]
 
     # attentions_language[i] = [
-    #     t.detach().to(torch.float32).numpy() if isinstance(t, torch.Tensor) else np.array(t)
+    #     t.detach().to(torch.float32).numpy() if isinstance(t, torch.Tensor) 
+    #                           else np.array(t)
     #     for t in attentions_language[i]
     # ]
 
@@ -50,37 +55,46 @@ for i in range(25):
 
     # Assuming shape: (num_layers, num_heads, num_nodes, num_nodes)
     # Aggregate across heads (e.g., mean over heads)
-    attn_language_mean[i] = np.mean(attentions_language[i], axis=1)  # Shape: (num_layers, num_nodes, num_nodes)
+    attn_language_mean[i] = np.mean(attentions_language[i], axis=1)  
+    # Shape: (num_layers, num_nodes, num_nodes)
     #attn_language_mean = np.mean(attentions_language, axis=1)
 
-    # Further reduce to get an overall activation per node (e.g., mean over key positions)
-    attn_language_avg[i] = np.mean(attn_language_mean[i], axis=-1)  # Shape: (num_layers, num_nodes)
+    # Further reduce to get an overall activation per node (e.g., 
+    # mean over key positions)
+    attn_language_avg[i] = np.mean(attn_language_mean[i], axis=-1)  
+    # Shape: (num_layers, num_nodes)
     #attn_language_avg = np.mean(attn_language_mean, axis=-1)
 
 # Function to plot heatmap
 def plot_heatmap(attn_data, title):
-    # plt.figure(figsize=(10, 6))
-    # sns.heatmap(attn_data.T, cmap="viridis", xticklabels=range(attn_data.shape[0]), yticklabels=range(attn_data.shape[1]))
-    # plt.xlabel("Layer")
-    # plt.ylabel("Node")
-    # plt.title(title)
-    # plt.close()
-    # Define bins for discretization (split data into 3 ranges)
-    # Define bins for discretization (4 categories => 5 edges)
-    bins = np.linspace(np.min(attn_data), np.max(attn_data), 5)  # 4 intervals => 5 bin edges
-    attn_binned = np.digitize(attn_data, bins) - 1  # Convert to bin numbers (0, 1, 2, 3)
+    
+    bins = np.linspace(np.min(attn_data), np.max(attn_data), 5)  
+    # 4 intervals => 5 bin edges
+
+    attn_binned = np.digitize(attn_data, bins) - 1  
+    # Convert to bin numbers (0, 1, 2, 3)
 
     # Custom colormap with exactly 4 colors
-    custom_cmap = sns.color_palette(["#440154", "#21908C", "#FDE724", "#F97306"], as_cmap=True)  # Purple, Green, Yellow, Orange
+    custom_cmap = sns.color_palette(["#440154", "#21908C", 
+                                     "#FDE724", "#F97306"], as_cmap=True)  
+    # Purple, Green, Yellow, Orange
 
     # Plot heatmap with colorbar
     plt.figure(figsize=(10, 6))
-    ax = sns.heatmap(attn_binned.T, cmap=custom_cmap, xticklabels=range(attn_data.shape[0]), yticklabels=range(attn_data.shape[1]), cbar=True)
+    ax = sns.heatmap(attn_binned.T, cmap=custom_cmap, 
+                     xticklabels=range(attn_data.shape[0]), 
+                     yticklabels=range(attn_data.shape[1]), cbar=True)
 
     # Customize the colorbar labels
     colorbar = ax.collections[0].colorbar
-    colorbar.set_ticks([0.5, 1.5, 2.5, 3.5])  # Set tick positions at the middle of each color
-    colorbar.set_ticklabels(["Low", "Medium", "High", "Very High"])  # Set tick labels
+
+    colorbar.set_ticks([0.5, 1.5, 2.5, 3.5])  
+    # Set tick positions at the middle of each color
+
+
+    colorbar.set_ticklabels(["Low", "Medium", "High", "Very High"])  
+            # Set tick labels
+
     colorbar.set_label("Attention Score Category")
 
     plt.xlabel("Layer")
@@ -105,7 +119,8 @@ print(len(hidden_language[0][-1]))
 
 # Access the specific node
 # for i in range(len(hidden_language)):
-#     specific_node_value = hidden_language[-1][batch_index, token_index, hidden_index]
+#     specific_node_value = hidden_language[-1][batch_index, token_index, 
+#                                                       hidden_index]
 #     print(f"Value of the specific node: {specific_node_value}")
    
 
@@ -183,16 +198,23 @@ with PdfPages("language_activations.pdf") as pdf:
 
 num_inputs = len(hidden_language)
 with PdfPages("language_bt2inputs_activations.pdf") as pdf:
-    num_layers = len(hidden_language[0])  # Number of layers (assumed same for all inputs)
+    num_layers = len(hidden_language[0])  
+    # Number of layers (assumed same for all inputs)
+
     num_nodes = 4096  # Number of nodes
 
     for layer_idx in range(num_layers):
-        node_values = np.zeros((num_inputs, num_nodes))  # Store activations for each input
+        node_values = np.zeros((num_inputs, num_nodes))  
+        # Store activations for each input
 
         for input_idx in range(25):
-            layer_hidden_state = hidden_language[input_idx][layer_idx]  # Extract current layer's hidden state
+            layer_hidden_state = hidden_language[input_idx][layer_idx]  
+            # Extract current layer's hidden state
+            
             for j in range(num_nodes):
-                node_values[input_idx, j] = layer_hidden_state[0, 6, j].item()  # Store node activation
+                
+                node_values[input_idx, j] = layer_hidden_state[0, 6, j].item()  
+                # Store node activation
         
         # Compute statistics across inputs
         mean_activations = np.mean(node_values, axis=0)
@@ -200,9 +222,11 @@ with PdfPages("language_bt2inputs_activations.pdf") as pdf:
 
         # Plot mean and stddev
         plt.figure(figsize=(8, 5))
-        plt.plot(range(num_nodes), mean_activations, marker="o", color="b", label="Mean Activation")
+        plt.plot(range(num_nodes), mean_activations, 
+                 marker="o", color="b", label="Mean Activation")
         plt.fill_between(range(num_nodes), mean_activations - std_activations, 
-                         mean_activations + std_activations, color='r', alpha=0.2, label="Std Dev")
+                         mean_activations + std_activations, 
+                         color='r', alpha=0.2, label="Std Dev")
         plt.title(f"Activation Statistics Across Inputs - Layer {layer_idx}")
         plt.xlabel("Node #")
         plt.ylabel("Activation Value")
@@ -214,7 +238,7 @@ with PdfPages("language_bt2inputs_activations.pdf") as pdf:
 
 with PdfPages("heatmap_bt2.pdf") as pdf:
     for i in range(25):
-        #plot_heatmap(np.mean(attn_language_avg[i], axis=-1), "language Attention Heatmap")
+        
         iiii = np.mean(attn_language_avg[i], axis=-1)
         bins = np.linspace(np.min(iiii), 
                             np.max(iiii), 5)  # 4 intervals
