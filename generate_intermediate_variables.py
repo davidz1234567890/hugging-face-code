@@ -32,20 +32,23 @@ hf_dataset = kagglehub.load_dataset(
 
 df = hf_dataset.to_pandas()
 BT6_questions = df[df['Category'] == 'BT6']
-count = 0
+count = 10
 dictionary_BT6 = {}
 # Loop through the DataFrame and print each question
 for index, row in BT6_questions.iterrows():
-    #print(f"Question {index}: {row['Questions']}")
-    #if(index >= 100 and index < 125):
-    dictionary_BT6[count] = row['Questions']
-    
-    if(count==9): 
-        break
-    count+=1
+    print(index)
+    print(f"Question {index}: {row['Questions']}")
+    if(index >= 291 and index <= 305):
+        dictionary_BT6[count] = row['Questions']
+        
+        if(count==24): 
+            break
+        count+=1
 
 print("dict")
 print(dictionary_BT6)
+
+
 
 
 print(len(dictionary_BT6))
@@ -117,7 +120,7 @@ hidden_language = {}
 outputs_language = {}
 attentions_language = {}
 
-for ii in range(10):
+for ii in range(10, 25):
 
     tokenizer=AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B-Instruct")
     input_text = dictionary_BT6[ii]  
@@ -194,7 +197,7 @@ for ii in range(10):
     with open(f'outputs_language_BT6inputs{ii}.pkl', 'wb') as dd:
         pickle.dump(outputs_language[ii], dd)
 
-    if(ii==9): #previously 4
+    if(ii==24): #previously 4
         break
     # analyze_activation_patterns_single_task(hidden_states, 
     #     attentions, 'logical')
