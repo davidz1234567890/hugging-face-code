@@ -14,45 +14,20 @@ from datasets import load_dataset
 import kagglehub
 from kagglehub import KaggleDatasetAdapter
 
-# Set the path to the file you'd like to load
-file_path = "blooms_taxonomy_dataset.csv"
-
-# Load the latest version
-hf_dataset = kagglehub.load_dataset(
-  KaggleDatasetAdapter.HUGGING_FACE,
-  "vijaydevane/blooms-taxonomy-dataset",
-  file_path,
-  # Provide any additional arguments like 
-  # sql_query, hf_kwargs, or pandas_kwargs. See 
-  # the documenation for more information:
-  # https://github.com/Kaggle/kagglehub/blob/main/README.md#kaggledatasetadapterhugging_face
-)
-
-
-
-df = hf_dataset.to_pandas()
-BT6_questions = df[df['Category'] == 'BT6']
-count = 10
-dictionary_BT6 = {}
-# Loop through the DataFrame and print each question
-for index, row in BT6_questions.iterrows():
-    print(index)
-    print(f"Question {index}: {row['Questions']}")
-    if(index >= 291 and index <= 305):
-        dictionary_BT6[count] = row['Questions']
-        
-        if(count==24): 
-            break
-        count+=1
-
-print("dict")
-print(dictionary_BT6)
 
 
 
 
-print(len(dictionary_BT6))
-#print(ds.features.length)
+
+ds = load_dataset("openai/gsm8k", "main")
+print(ds)
+questions_train = ds['train']['question']
+print(questions_train[:25])
+q = questions_train[:25]
+
+
+
+
 
 def analyze_activation_patterns_single_task(hidden_states, attentions, task_label):
     # Convert tensors to Float32 to avoid BFloat16 issues
@@ -116,14 +91,14 @@ model = AutoModelForCausalLM.from_pretrained(model_id,
 
 print("test")
 
-hidden_language = {}
-outputs_language = {}
-attentions_language = {}
+hidden_logical = {}
+outputs_logical = {}
+attentions_logical = {}
 
-for ii in range(10, 25):
+for ii in range(24, 25):
 
     tokenizer=AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B-Instruct")
-    input_text = dictionary_BT6[ii]  
+    input_text = q[ii]  
     inputs = tokenizer(input_text, return_tensors="pt")
 
     print(f"here is input text: {input_text}")
@@ -145,8 +120,8 @@ for ii in range(10, 25):
     hidden_states = outputs.hidden_states  
 
     
-    hidden_language[ii] = hidden_states
-    outputs_language[ii] = outputs
+    hidden_logical[ii] = hidden_states
+    outputs_logical[ii] = outputs
     # elif ii == 1:
     #     hidden_language = hidden_states
     #     outputs_language = outputs
@@ -158,7 +133,7 @@ for ii in range(10, 25):
 
     # Access attention maps
     attentions = outputs.attentions  
-    attentions_language[ii] = attentions
+    attentions_logical[ii] = attentions
     # if ii == 0:
     #     attentions_logical = hidden_states
     # elif ii == 1:
@@ -186,16 +161,16 @@ for ii in range(10, 25):
                                     temperature=0.7, top_k=50, top_p=0.9)
     print(f"Output Text: {generated_text}")
 
-    with open(f'hidden_language_BT6inputs{ii}.pkl', 'wb') as f:
-        pickle.dump(hidden_language[ii], f)
+    with open(f'hidden_logical_openai_gsm8k{ii}.pkl', 'wb') as f:
+        pickle.dump(hidden_logical[ii], f)
 
     
-    with open(f'attentions_language_BT6inputs{ii}.pkl', 'wb') as bb:
-        pickle.dump(attentions_language[ii], bb)
+    with open(f'attentions_logical_openai_gsm8k{ii}.pkl', 'wb') as bb:
+        pickle.dump(attentions_logical[ii], bb)
 
 
-    with open(f'outputs_language_BT6inputs{ii}.pkl', 'wb') as dd:
-        pickle.dump(outputs_language[ii], dd)
+    with open(f'outputs_logical_openai_gsm8k{ii}.pkl', 'wb') as dd:
+        pickle.dump(outputs_logical[ii], dd)
 
     if(ii==24): #previously 4
         break
