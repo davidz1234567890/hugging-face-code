@@ -9,38 +9,54 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 
 
-hidden_language = {}
-attentions_language = {}
-outputs_language = {}
+hidden_logical = {}
+attentions_logical = {}
+outputs_logical = {}
 for i in range(25):
-    with open(f'hidden_language_bt2/hidden_language_bt2inputs{i}.pkl', 
+    with open(f'hidden_logical/hidden_logical_mathinputs{i}.pkl', 
               'rb') as f:
-        hidden_language[i] = pickle.load(f)
+        hidden_logical[i] = pickle.load(f)
     
     
 
-    with open(f'attentions_language_bt2/attentions_language_bt2inputs{i}.pkl', 
+    with open(f'attentions_logical/attentions_logical_mathinputs{i}.pkl', 
               'rb') as f:
-        attentions_language[i] = pickle.load(f)
+        attentions_logical[i] = pickle.load(f)
 
     
 
-    with open(f'outputs_language_bt2/outputs_language_bt2inputs{i}.pkl', 
+    with open(f'outputs_logical/outputs_logical_mathinputs{i}.pkl', 
               'rb') as f:
-        outputs_language[i] = pickle.load(f)
+        outputs_logical[i] = pickle.load(f)
 
+for i in range(25):
+    with open(f'hidden_logical_openai_gsm8k/hidden_logical_openai_gsm8k{i}.pkl', 
+              'rb') as f:
+        hidden_logical[i+25] = pickle.load(f)
+    
+    
 
+    with open(f'attentions_logical_openai_gsm8k/attentions_logical_openai_gsm8k{i}.pkl', 
+              'rb') as f:
+        attentions_logical[i+25] = pickle.load(f)
+
+    
+
+    with open(f'outputs_logical_openai_gsm8k/outputs_logical_openai_gsm8k{i}.pkl', 
+              'rb') as f:
+        outputs_logical[i+25] = pickle.load(f)
 
 
 
 # Ensure each element is detached, converted to float32, and then to NumPy
-attn_language_mean = {}
-attn_language_avg = {}
-for i in range(25):
-    attentions_language[i] = [
+attn_logical_mean = {}
+attn_logical_avg = {}
+for i in range(50):
+    print(f"index is {i} and shape is {type(attentions_logical[i])}")
+    attentions_logical[i] = [
         t.detach().to(torch.float32).numpy() if isinstance(t, torch.Tensor) 
                                         else np.array(t)
-        for t in attentions_language[i]
+        for t in attentions_logical[i]
     ]
 
     # attentions_language[i] = [
@@ -48,20 +64,20 @@ for i in range(25):
     #                           else np.array(t)
     #     for t in attentions_language[i]
     # ]
-
+    
     # Convert list of NumPy arrays into a single NumPy array
-    attentions_language[i] = np.array(attentions_language[i])
+    attentions_logical[i] = np.array(attentions_logical[i])
     #attentions_language[i] = np.array(attentions_language)
-
+    print(f"index is {i} and shape is {attentions_logical[i].shape}")
     # Assuming shape: (num_layers, num_heads, num_nodes, num_nodes)
     # Aggregate across heads (e.g., mean over heads)
-    attn_language_mean[i] = np.mean(attentions_language[i], axis=1)  
+    attn_logical_mean[i] = np.mean(attentions_logical[i], axis=1)  
     # Shape: (num_layers, num_nodes, num_nodes)
     #attn_language_mean = np.mean(attentions_language, axis=1)
 
     # Further reduce to get an overall activation per node (e.g., 
     # mean over key positions)
-    attn_language_avg[i] = np.mean(attn_language_mean[i], axis=-1)  
+    attn_logical_avg[i] = np.mean(attn_logical_mean[i], axis=-1)  
     # Shape: (num_layers, num_nodes)
     #attn_language_avg = np.mean(attn_language_mean, axis=-1)
 
@@ -113,8 +129,8 @@ batch_index = 0  # First sequence in the batch
 token_index = 0  # First token in the sequence
 hidden_index = 10 
 
-print(type(hidden_language[0][-1]))
-print(len(hidden_language[0][-1]))
+print(type(hidden_logical[0][-1]))
+print(len(hidden_logical[0][-1]))
 
 
 # Access the specific node
@@ -195,9 +211,9 @@ with PdfPages("language_activations.pdf") as pdf:
         break '''
 
 
-
+'''
 num_inputs = len(hidden_language)
-with PdfPages("language_bt2inputs_activations.pdf") as pdf:
+with PdfPages("language_activations.pdf") as pdf:
     num_layers = len(hidden_language[0])  
     # Number of layers (assumed same for all inputs)
 
@@ -236,8 +252,8 @@ with PdfPages("language_bt2inputs_activations.pdf") as pdf:
         pdf.savefig()
         plt.close()
 
-with PdfPages("heatmap_bt2.pdf") as pdf:
-    for i in range(25):
+with PdfPages("heatmap_language_prompts.pdf") as pdf:
+    for i in range(50):
         
         iiii = np.mean(attn_language_avg[i], axis=-1)
         bins = np.linspace(np.min(iiii), 
@@ -271,6 +287,56 @@ with PdfPages("heatmap_bt2.pdf") as pdf:
         plt.title(f"Heatmap for input {i}")
         pdf.savefig()
         plt.close()
+
+'''
+
+# Compute the mean over all 50 inputs
+
+sum_array = None
+
+for idx, array in attn_logical_avg.items():
+    print(f"here is {idx} and here is shape: {array.shape}")
+    mean_array = np.mean(array, axis=2)
+    print(f"here is shape: {mean_array.shape}") 
+    if sum_array is None:
+        sum_array = np.zeros_like(mean_array)  # Initialize with zeros of the same shape
+    sum_array += mean_array  # Sum up all arrays
+
+# Compute the mean array by dividing by the number of inputs
+mean_activations = sum_array / len(attn_logical_avg)
+
+
+
+# Bin the averaged activations
+bins = np.linspace(np.min(mean_activations), np.max(mean_activations), 5)  # 4 intervals → 5 bin edges
+attn_binned = np.digitize(mean_activations, bins) - 1  # Convert to bin numbers (0, 1, 2, 3)
+
+# Custom colormap with exactly 4 colors
+custom_cmap = sns.color_palette(["#440154", "#21908C", "#FDE724", "#F97306"], as_cmap=True)  
+# Purple, Green, Yellow, Orange
+
+# Plot heatmap with colorbar
+plt.figure(figsize=(10, 6))
+ax = sns.heatmap(attn_binned.T, cmap=custom_cmap, 
+                 xticklabels=range(mean_activations.shape[0]), 
+                 yticklabels=range(mean_activations.shape[1]), 
+                 cbar=True)
+
+# Customize the colorbar labels
+colorbar = ax.collections[0].colorbar
+colorbar.set_ticks([0.5, 1.5, 2.5, 3.5])  
+colorbar.set_ticklabels(["Low", "Medium", "High", "Very High"])  
+colorbar.set_label("Attention Score Category")
+
+plt.xlabel("Layer")
+plt.ylabel("Node")
+plt.title("Heatmap of Average Attention Across 50 Logical Inputs")
+
+# Save the single heatmap to a PDF
+with PdfPages("heatmap_logical_prompts_test123123.pdf") as pdf:
+    pdf.savefig()
+    plt.close()
+
 #assert(1==0)
 #plot_heatmap(attn_language_avg, "Language Attention Heatmap")
 print("finished")
