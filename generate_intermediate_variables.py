@@ -15,15 +15,32 @@ import kagglehub
 from kagglehub import KaggleDatasetAdapter
 
 
+q = {}
+q[0] = "What does 1 plus 1 equal?"
+q[1] = "Hey, do you know what 1+1 is?"
+q[2] = "Could you please tell me the sum of 1 and 1?"
+q[3] = "If you add one apple to another apple, how many apples do you have?"
+q[4] = "If you take a single entity and combine it with another, what does that make?"
+q[5] = "Solve for X: 1 + 1 = X."
+q[6] = "What is the result of adding two identical units of measurement, each equal to 1?"
+q[7] = "Mommy, what happens if I put one block with another block?"
+q[8] = "If one heart meets another, how many beats will they make together?"
+q[9] = "If A = 1 and B = 1, what is A + B?"
+q[10] = "If I have one brain cell and gain another, how many do I have now?"
+q[11] = "I’ve been wondering—what do you get when you add 1 and 1?"
+q[12] = "If you mix one drop of water with another, how much water do you have?"
+q[13] = "We all know what 1+1 is, but do we truly understand it?"
+q[14] = "I need some help—what’s the sum of 1 and 1?"
+q[15] = "I know this is a tough one, but can you tell me what 1+1 is?"
+q[16] = "Imagine you have 1… then another 1 appears… What now?"
+q[17] = "You wouldn’t happen to know what 1+1 is, would you?"
+q[18] = "Since the dawn of time, humans have wondered: what is the sum of 1 and 1?"
+q[19] = "If I have one cookie and steal another, how many do I have (before I get caught)?"
 
 
 
 
-ds = load_dataset("openai/gsm8k", "main")
-print(ds)
-questions_train = ds['train']['question']
-print(questions_train[:25])
-q = questions_train[:25]
+
 
 
 
@@ -95,7 +112,7 @@ hidden_logical = {}
 outputs_logical = {}
 attentions_logical = {}
 
-for ii in range(24, 25):
+for ii in range(len(q)):
 
     tokenizer=AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B-Instruct")
     input_text = q[ii]  
@@ -161,19 +178,17 @@ for ii in range(24, 25):
                                     temperature=0.7, top_k=50, top_p=0.9)
     print(f"Output Text: {generated_text}")
 
-    with open(f'hidden_logical_openai_gsm8k{ii}.pkl', 'wb') as f:
+    with open(f'hidden_similar_logical{ii}.pkl', 'wb') as f:
         pickle.dump(hidden_logical[ii], f)
 
     
-    with open(f'attentions_logical_openai_gsm8k{ii}.pkl', 'wb') as bb:
+    with open(f'attentions_similar_logical{ii}.pkl', 'wb') as bb:
         pickle.dump(attentions_logical[ii], bb)
 
 
-    with open(f'outputs_logical_openai_gsm8k{ii}.pkl', 'wb') as dd:
+    with open(f'outputs_similar_logical{ii}.pkl', 'wb') as dd:
         pickle.dump(outputs_logical[ii], dd)
 
-    if(ii==24): #previously 4
-        break
     # analyze_activation_patterns_single_task(hidden_states, 
     #     attentions, 'logical')
     
