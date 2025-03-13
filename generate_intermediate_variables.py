@@ -16,26 +16,26 @@ from kagglehub import KaggleDatasetAdapter
 
 
 q = {}
-q[0] = "What does 1 plus 1 equal?"
-q[1] = "Hey, do you know what 1+1 is?"
-q[2] = "Could you please tell me the sum of 1 and 1?"
-q[3] = "If you add one apple to another apple, how many apples do you have?"
-q[4] = "If you take a single entity and combine it with another, what does that make?"
-q[5] = "Solve for X: 1 + 1 = X."
-q[6] = "What is the result of adding two identical units of measurement, each equal to 1?"
-q[7] = "Mommy, what happens if I put one block with another block?"
-q[8] = "If one heart meets another, how many beats will they make together?"
-q[9] = "If A = 1 and B = 1, what is A + B?"
-q[10] = "If I have one brain cell and gain another, how many do I have now?"
-q[11] = "I’ve been wondering—what do you get when you add 1 and 1?"
-q[12] = "If you mix one drop of water with another, how much water do you have?"
-q[13] = "We all know what 1+1 is, but do we truly understand it?"
-q[14] = "I need some help—what’s the sum of 1 and 1?"
-q[15] = "I know this is a tough one, but can you tell me what 1+1 is?"
-q[16] = "Imagine you have 1… then another 1 appears… What now?"
-q[17] = "You wouldn’t happen to know what 1+1 is, would you?"
-q[18] = "Since the dawn of time, humans have wondered: what is the sum of 1 and 1?"
-q[19] = "If I have one cookie and steal another, how many do I have (before I get caught)?"
+q[0] = "Can you walk me through the steps to set up a Raspberry Pi for the first time, including hooking it up to a monitor and keyboard?"
+q[1] = "How do I set up a Raspberry Pi from scratch, and what are the steps for connecting it to a monitor and keyboard?"
+q[2] = "Give me a detailed guide on setting up my Raspberry Pi, starting with connecting it to a keyboard and monitor."
+q[3] = "What are the first steps to set up a Raspberry Pi, and how do I connect it to a monitor and keyboard?"
+q[4] = "Please provide a tutorial on getting a Raspberry Pi up and running, including how to connect it to a monitor and keyboard."
+q[5] = "Can you explain how to start using a Raspberry Pi for the first time and connect it to a monitor and keyboard?"
+q[6] = "What’s the process for setting up a Raspberry Pi, especially connecting it to a monitor and keyboard?"
+q[7] = "Can you give me step-by-step instructions to set up my Raspberry Pi with a monitor and keyboard?"
+q[8] = "How do I go about setting up my Raspberry Pi, including the steps for connecting it to a monitor and keyboard?"
+q[9] = "Please outline the setup procedure for a Raspberry Pi, including how to connect it to a monitor and keyboard."
+q[10] = "What are the steps involved in setting up a Raspberry Pi, and how do I hook it up to a keyboard and monitor?"
+q[11] = "Help me with the process of setting up a Raspberry Pi for the first time and connecting it to a keyboard and monitor."
+q[12] = "Can you show me how to connect a Raspberry Pi to a monitor and keyboard and set it up for the first time?"
+q[13] = "Provide a guide to setting up my Raspberry Pi, including how to connect it to a keyboard and monitor."
+q[14] = "Give me step-by-step directions for getting a Raspberry Pi up and running, including how to connect it to a monitor and keyboard."
+q[15] = "Can you guide me through setting up my Raspberry Pi and connecting it to a monitor and keyboard?"
+q[16] = "I need a simple guide for setting up a Raspberry Pi, including how to connect it to a keyboard and monitor."
+q[17] = "How do I connect a Raspberry Pi to a monitor and keyboard, and what are the steps to get it working?"
+q[18] = "Please provide instructions for setting up a Raspberry Pi for the first time, including connecting it to a monitor and keyboard."
+q[19] = "Can you help me set up my Raspberry Pi from scratch and connect it to a keyboard and monitor?"
 
 
 
@@ -108,11 +108,11 @@ model = AutoModelForCausalLM.from_pretrained(model_id,
 
 print("test")
 
-hidden_logical = {}
-outputs_logical = {}
-attentions_logical = {}
+hidden_language = {}
+outputs_language = {}
+attentions_language = {}
 
-for ii in range(len(q)):
+for ii in range(19, 20):
 
     tokenizer=AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B-Instruct")
     input_text = q[ii]  
@@ -137,8 +137,8 @@ for ii in range(len(q)):
     hidden_states = outputs.hidden_states  
 
     
-    hidden_logical[ii] = hidden_states
-    outputs_logical[ii] = outputs
+    hidden_language[ii] = hidden_states
+    outputs_language[ii] = outputs
     # elif ii == 1:
     #     hidden_language = hidden_states
     #     outputs_language = outputs
@@ -150,7 +150,7 @@ for ii in range(len(q)):
 
     # Access attention maps
     attentions = outputs.attentions  
-    attentions_logical[ii] = attentions
+    attentions_language[ii] = attentions
     # if ii == 0:
     #     attentions_logical = hidden_states
     # elif ii == 1:
@@ -178,16 +178,16 @@ for ii in range(len(q)):
                                     temperature=0.7, top_k=50, top_p=0.9)
     print(f"Output Text: {generated_text}")
 
-    with open(f'hidden_similar_logical{ii}.pkl', 'wb') as f:
-        pickle.dump(hidden_logical[ii], f)
+    with open(f'hidden_similar_language{ii}.pkl', 'wb') as f:
+        pickle.dump(hidden_language[ii], f)
 
     
-    with open(f'attentions_similar_logical{ii}.pkl', 'wb') as bb:
-        pickle.dump(attentions_logical[ii], bb)
+    with open(f'attentions_similar_language{ii}.pkl', 'wb') as bb:
+        pickle.dump(attentions_language[ii], bb)
 
 
-    with open(f'outputs_similar_logical{ii}.pkl', 'wb') as dd:
-        pickle.dump(outputs_logical[ii], dd)
+    with open(f'outputs_similar_language{ii}.pkl', 'wb') as dd:
+        pickle.dump(outputs_language[ii], dd)
 
     # analyze_activation_patterns_single_task(hidden_states, 
     #     attentions, 'logical')
