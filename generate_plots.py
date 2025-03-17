@@ -1,3 +1,4 @@
+
 #hello
 import pickle
 import torch
@@ -6,55 +7,55 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 
-hidden_language = {}
-attentions_language = {}
-outputs_language = {}
+hidden_logical = {}
+attentions_logical = {}
+outputs_logical = {}
 for i in range(25):
-    with open(f'hidden_language_bt2/hidden_language_bt2inputs{i}.pkl', 
+    with open(f'hidden_logical_mathinputs/hidden_logical_mathinputs{i}.pkl', 
               'rb') as f:
-        hidden_language[i] = pickle.load(f)
+        hidden_logical[i] = pickle.load(f)
     
     
 
-    with open(f'attentions_language_bt2/attentions_language_bt2inputs{i}.pkl', 
+    with open(f'attentions_logical_mathinputs/attentions_logical_mathinputs{i}.pkl', 
               'rb') as f:
-        attentions_language[i] = pickle.load(f)
+        attentions_logical[i] = pickle.load(f)
 
     
 
-    with open(f'outputs_language_bt2/outputs_language_bt2inputs{i}.pkl', 
+    with open(f'outputs_logical_mathinputs/outputs_logical_mathinputs{i}.pkl', 
               'rb') as f:
-        outputs_language[i] = pickle.load(f)
+        outputs_logical[i] = pickle.load(f)
 
 for i in range(25):
-    with open(f'hidden_language_BT6/hidden_language_BT6inputs{i}.pkl', 
+    with open(f'hidden_logical_openai_gsm8k/hidden_logical_openai_gsm8k{i}.pkl', 
               'rb') as f:
-        hidden_language[i+25] = pickle.load(f)
+        hidden_logical[i+25] = pickle.load(f)
     
     
 
-    with open(f'attentions_language_BT6/attentions_language_BT6inputs{i}.pkl', 
+    with open(f'attentions_logical_openai_gsm8k/attentions_logical_openai_gsm8k{i}.pkl', 
               'rb') as f:
-        attentions_language[i+25] = pickle.load(f)
+        attentions_logical[i+25] = pickle.load(f)
 
     
 
-    with open(f'outputs_language_BT6/outputs_language_BT6inputs{i}.pkl', 
+    with open(f'outputs_logical_openai_gsm8k/outputs_logical_openai_gsm8k{i}.pkl', 
               'rb') as f:
-        outputs_language[i+25] = pickle.load(f)
+        outputs_logical[i+25] = pickle.load(f)
 
 
 
 
 # Ensure each element is detached, converted to float32, and then to NumPy
-attn_language_mean = {}
-attn_language_avg = {}
+attn_logical_mean = {}
+attn_logical_avg = {}
 for i in range(50):
-    print(f"index is {i} and shape is {type(attentions_language[i])}")
-    attentions_language[i] = [
+    print(f"index is {i} and shape is {type(attentions_logical[i])}")
+    attentions_logical[i] = [
         t.detach().to(torch.float32).numpy() if isinstance(t, torch.Tensor) 
                                         else np.array(t)
-        for t in attentions_language[i]
+        for t in attentions_logical[i]
     ]
 
     # attentions_language[i] = [
@@ -64,18 +65,18 @@ for i in range(50):
     # ]
     
     # Convert list of NumPy arrays into a single NumPy array
-    attentions_language[i] = np.array(attentions_language[i])
+    attentions_logical[i] = np.array(attentions_logical[i])
     #attentions_language[i] = np.array(attentions_language)
-    print(f"index is {i} and shape is {attentions_language[i].shape}")
+    print(f"index is {i} and shape is {attentions_logical[i].shape}")
     # Assuming shape: (num_layers, num_heads, num_nodes, num_nodes)
     # Aggregate across heads (e.g., mean over heads)
-    attn_language_mean[i] = np.mean(attentions_language[i], axis=1)  
+    attn_logical_mean[i] = np.mean(attentions_logical[i], axis=1)  
     # Shape: (num_layers, num_nodes, num_nodes)
     #attn_language_mean = np.mean(attentions_language, axis=1)
 
     # Further reduce to get an overall activation per node (e.g., 
     # mean over key positions)
-    attn_language_avg[i] = np.mean(attn_language_mean[i], axis=-1)  
+    attn_logical_avg[i] = np.mean(attn_logical_mean[i], axis=-1)  
     # Shape: (num_layers, num_nodes)
     #attn_language_avg = np.mean(attn_language_mean, axis=-1)
 
@@ -122,7 +123,7 @@ with PdfPages("language_activations_for_variations_of_the_same_prompt.pdf") as p
 
 sum_array = None
 
-for idx, array in attn_language_avg.items():
+for idx, array in attn_logical_avg.items():
     print(f"here is {idx} and here is shape: {array.shape}")
     mean_array = np.mean(array, axis=2)
     print(f"here is shape: {mean_array.shape}") 
@@ -131,7 +132,7 @@ for idx, array in attn_language_avg.items():
     sum_array += mean_array  # Sum up all arrays
 
 # Compute the mean array by dividing by the number of inputs
-mean_activations = sum_array / len(attn_language_avg)
+mean_activations = sum_array / len(attn_logical_avg)
 
 
 print("Min activation:", np.min(mean_activations))
@@ -178,7 +179,7 @@ print("finished")
 
 prob_array_total = None
 
-for idx, array in attn_language_avg.items():
+for idx, array in attn_logical_avg.items():
     print(f"Max before mean in {idx}:", np.max(array))
     print(f"Min before mean in {idx}:", np.min(array))
     print(f"here is {idx} and here is shape: {array.shape}")
@@ -192,9 +193,9 @@ for idx, array in attn_language_avg.items():
             if mean_array[i][j] >= 0.10:#  and mean_array[i][j] <= 0.06107523:
                 prob_array[i][j] = 1
             # elif mean_array[i][j] >= 0.075:
-            #     prob_array[i][j] = 3
+            #     prob_array[i][j] = 0.75
             # elif mean_array[i][j] >= 0.050:
-            #     prob_array[i][j] = 2
+            #     prob_array[i][j] = 0.50
             else:
                 prob_array[i][j] = 0
     
@@ -230,12 +231,7 @@ colorbar.set_label("Attention Score Category")
 
 plt.xlabel("Layer")
 plt.ylabel("Node")
-plt.title("Heatmap of Probability for language")
-# Save the figure as a PDF
-plt.savefig("heatmap_probability_language.pdf", format="pdf", bbox_inches="tight")
-
-# Display the plot
+plt.title("Heatmap of probability for logical")
+plt.savefig("heatmap_probability_logical.pdf", format="pdf", bbox_inches="tight")
 plt.show()
-
-print("Truly finished")
 print("truly finished")
