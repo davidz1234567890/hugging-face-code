@@ -190,13 +190,13 @@ for idx, array in attn_language_avg.items():
         for j in range(32):
             #print(f"here is mean_array[i][j]: {mean_array[i][j]}")
             if mean_array[i][j] >= 0.10:#  and mean_array[i][j] <= 0.06107523:
-                prob_array[i][j] = 1
-            elif mean_array[i][j] >= 0.075:
-                prob_array[i][j] = 0.75
-            elif mean_array[i][j] >= 0.050:
-                prob_array[i][j] = 0.50
+                prob_array[i][j] = 4
+            # elif mean_array[i][j] >= 0.075:
+            #     prob_array[i][j] = 3
+            # elif mean_array[i][j] >= 0.050:
+            #     prob_array[i][j] = 2
             else:
-                prob_array[i][j] = 0.25 
+                prob_array[i][j] = 1
     
     if prob_array_total is None:
         prob_array_total = np.zeros_like(mean_array)
@@ -230,6 +230,12 @@ colorbar.set_label("Attention Score Category")
 
 plt.xlabel("Layer")
 plt.ylabel("Node")
-plt.title("Heatmap of Probability")
+plt.title("Heatmap of Probability for language")
+# Save the figure as a PDF
+plt.savefig("heatmap_probability_language.pdf", format="pdf", bbox_inches="tight")
+
+# Display the plot
 plt.show()
-print("truely finished")
+
+print("Truly finished")
+print("truly finished")
