@@ -98,7 +98,7 @@ colors = ["darkblue", "green", "orange", "red"]  # 4 distinct color levels
 cmap = ListedColormap(colors)
 
 
-pdf_filename = "heatmap_logical_corrected_with_hidden_node_values.pdf"
+pdf_filename = "heatmap_logical_probability_corrected_with_hidden_node_values.pdf"
 with PdfPages(pdf_filename) as pdf:
     # Iterate through each layer
     for layer_idx in range(num_layers):
@@ -109,11 +109,27 @@ with PdfPages(pdf_filename) as pdf:
             layer_hidden_state = hidden_logical[input_idx][layer_idx]  # Shape: (1, 6, 4096)
             node_values[input_idx, :] = layer_hidden_state[0, 5, :]  # Extract activations
 
+        
+
         # Define percentile-based activation thresholds
         vmin, vmax = np.min(node_values), np.max(node_values)
         p25 = np.percentile(node_values, 25)
         p50 = np.percentile(node_values, 50)
         p75 = np.percentile(node_values, 75)
+
+        node_values = (node_values > p75).astype(int)
+
+        node_sums = np.sum(node_values, axis=0) 
+
+        # Define percentile-based activation thresholds
+        vmin, vmax = np.min(node_sums), np.max(node_sums)
+        p25 = np.percentile(node_sums, 25)
+        p50 = np.percentile(node_sums, 50)
+        p75 = np.percentile(node_sums, 75)
+
+        node_sums = node_sums.reshape(1, -1)  # Shape becomes (1, 4096)
+
+        print(node_sums.shape)
 
         # Define boundaries for activation categories
         boundaries = [vmin, p25, p50, p75, vmax]
@@ -122,15 +138,15 @@ with PdfPages(pdf_filename) as pdf:
         for chunk_idx in range(num_chunks):
             start_node = chunk_idx * chunk_size
             end_node = start_node + chunk_size
-            chunk_data = node_values[:, start_node:end_node]  # Select subset of nodes
+            chunk_data = node_sums[:,start_node:end_node]  # Select subset of nodes
 
             # Plot heatmap with custom colormap
             plt.figure(figsize=(12, 6))
             plt.imshow(chunk_data, aspect="auto", cmap=cmap, norm=norm)
             plt.colorbar(label="Activation Level", ticks=[p25, p50, p75])
-            plt.title(f"Heatmap - Layer {layer_idx} (Nodes {start_node}-{end_node})")
+            plt.title(f"Heatmap - Layer {layer_idx} (Probability {start_node}-{end_node})")
             plt.xlabel("Node #")
-            plt.ylabel("Input Index")
+            plt.ylabel("Ignore this axis")
 
             # Save the figure to the PDF
             pdf.savefig()
