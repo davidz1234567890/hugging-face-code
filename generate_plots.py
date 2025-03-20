@@ -8,6 +8,7 @@ import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, BoundaryNorm
 
 hidden_language = {}
 attentions_language = {}
@@ -91,6 +92,11 @@ for i in range(50):
 num_layers = len(hidden_language[0])  # 33 layers
 num_nodes = 4096  # 4096 nodes
 num_inputs = 50  # 50 inputs
+chunk_size = 128
+
+# Custom colormap for 4 activation levels
+colors = ["darkblue", "green", "orange", "red"]  # 4 distinct color levels
+cmap = ListedColormap(colors)
 
 
 pdf_filename = "heatmap_language_corrected_with_hidden_node_values.pdf"
@@ -104,21 +110,32 @@ with PdfPages(pdf_filename) as pdf:
             layer_hidden_state = hidden_language[input_idx][layer_idx]  # Shape: (1, 6, 4096)
             node_values[input_idx, :] = layer_hidden_state[0, 5, :]  # Extract activations
 
-        # Compute the mean activation values across all inputs
-        mean_activations = np.mean(node_values, axis=0)  # Shape: (4096,)
+        # Define percentile-based activation thresholds
+        vmin, vmax = np.min(node_values), np.max(node_values)
+        p25 = np.percentile(node_values, 25)
+        p50 = np.percentile(node_values, 50)
+        p75 = np.percentile(node_values, 75)
 
-        # Plot heatmap for this layer
-        plt.figure(figsize=(12, 6))
-        plt.imshow(mean_activations.reshape(1, num_nodes), aspect="auto", cmap="viridis", interpolation="nearest")
-        plt.colorbar(label="Average Activation Value")
-        plt.title(f"Heatmap of Average Node Activations - Layer {layer_idx}")
-        plt.xlabel("Node #")
-        plt.ylabel("Layer")
-        plt.yticks([])  # Remove y-axis ticks for better visualization
+        # Define boundaries for activation categories
+        boundaries = [vmin, p25, p50, p75, vmax]
+        norm = BoundaryNorm(boundaries, cmap.N)
+        num_chunks = num_nodes // chunk_size  # 8 chunks per layer
+        for chunk_idx in range(num_chunks):
+            start_node = chunk_idx * chunk_size
+            end_node = start_node + chunk_size
+            chunk_data = node_values[:, start_node:end_node]  # Select subset of nodes
 
-        # Save the figure to the PDF
-        pdf.savefig()
-        plt.close()  # Close the plot to free memory
+            # Plot heatmap with custom colormap
+            plt.figure(figsize=(12, 6))
+            plt.imshow(chunk_data, aspect="auto", cmap=cmap, norm=norm)
+            plt.colorbar(label="Activation Level", ticks=[p25, p50, p75])
+            plt.title(f"Heatmap - Layer {layer_idx} (Nodes {start_node}-{end_node})")
+            plt.xlabel("Node #")
+            plt.ylabel("Input Index")
+
+            # Save the figure to the PDF
+            pdf.savefig()
+            plt.close()  # Close the plot to free memory
 
 
 print("finished")
