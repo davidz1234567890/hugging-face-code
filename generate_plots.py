@@ -93,7 +93,7 @@ for i in range(50):
 
 
 num_inputs = len(hidden_language)
-with PdfPages("language_activations.pdf") as pdf:
+with PdfPages("language_activations_sorted.pdf") as pdf:
     num_layers = len(hidden_language[0])  # Number of layers (assumed same for all inputs)
     num_nodes = 4096  # Number of nodes
 
@@ -127,14 +127,18 @@ with PdfPages("language_activations.pdf") as pdf:
 
         print(node_sums.shape)
         
+        # Sort node_sums and get the sorted indices
+        sorted_indices = np.argsort(node_sums)  # Indices that would sort node_sums
+        sorted_node_sums = node_sums[sorted_indices]  # Sorted values
+
         plt.figure(figsize=(8, 5))
-        plt.plot(range(num_nodes), node_sums, marker="o", color="b", label="Probability")
+        plt.plot(range(num_nodes), sorted_node_sums, marker="o", color="b", label="Probability")
 
         plt.title(f"Probability Statistics Across Inputs - Layer {layer_idx}")
-        plt.xlabel("Node #")
+        plt.xlabel("Sorted Node # (Lowest to Highest Activation)")
         plt.ylabel("Probability Value")
         plt.grid(True)
-       
+
         plt.legend()
         pdf.savefig()
         plt.close()
