@@ -91,19 +91,11 @@ for i in range(50):
 
 
 
-num_layers = len(hidden_logical[0])  # 33 layers
-num_nodes = 4096  # 4096 nodes
-num_inputs = 50  # 50 inputs
-chunk_size = 128
+num_inputs = len(hidden_logical)
+with PdfPages("logical_activations.pdf") as pdf:
+    num_layers = len(hidden_logical[0])  # Number of layers (assumed same for all inputs)
+    num_nodes = 4096  # Number of nodes
 
-# Custom colormap for 4 activation levels
-colors = ["darkblue", "green", "orange", "red"]  # 4 distinct color levels
-cmap = ListedColormap(colors)
-
-
-pdf_filename = "heatmap_logical_probability_corrected_with_hidden_node_values.pdf"
-with PdfPages(pdf_filename) as pdf:
-    # Iterate through each layer
     for layer_idx in range(num_layers):
         node_values = np.zeros((num_inputs, num_nodes))  # Store activations across inputs
 
@@ -130,48 +122,21 @@ with PdfPages(pdf_filename) as pdf:
         p50 = np.percentile(node_sums, 50)
         p75 = np.percentile(node_sums, 75)
 
-        node_sums = node_sums.reshape(1, -1)  # Shape becomes (1, 4096)
+        #node_sums = node_sums.reshape(1, -1)  # Shape becomes (1, 4096)
 
         print(node_sums.shape)
+        
+        plt.figure(figsize=(8, 5))
+        plt.plot(range(num_nodes), node_sums, marker="o", color="b", label="Probability")
 
-        # Reshape node_sums to desired 2D shape (e.g., 32 x 128)
-        heatmap_shape = (32, 128)  # Example: 32 rows, 128 columns
-        node_sums_reshaped = node_sums.reshape(heatmap_shape)  # Reshape to desired format
-
-        # Plot heatmap with custom colormap
-        boundaries = [vmin, p25, p50, p75, vmax]
-        norm = BoundaryNorm(boundaries, cmap.N)
-        plt.figure(figsize=(12, 6))
-        plt.imshow(node_sums_reshaped, aspect="auto", cmap=cmap, norm=norm)
-        plt.colorbar(label="Probability", ticks=[p25, p50, p75])
-        plt.title(f"Heatmap - Layer {layer_idx}")
-        plt.xlabel("Node Col")
-        plt.ylabel("Node Row")
-
-        # Save the figure to the PDF
+        plt.title(f"Probability Statistics Across Inputs - Layer {layer_idx}")
+        plt.xlabel("Node #")
+        plt.ylabel("Probability Value")
+        plt.grid(True)
+       
+        plt.legend()
         pdf.savefig()
-        plt.close()  # Close the plot to free memory
-
-        # Define boundaries for activation categories
-        # boundaries = [vmin, p25, p50, p75, vmax]
-        # norm = BoundaryNorm(boundaries, cmap.N)
-        # num_chunks = num_nodes // chunk_size  
-        # for chunk_idx in range(num_chunks):
-        #     start_node = chunk_idx * chunk_size
-        #     end_node = start_node + chunk_size
-        #     chunk_data = node_sums[:,start_node:end_node]  # Select subset of nodes
-
-        #     # Plot heatmap with custom colormap
-        #     plt.figure(figsize=(12, 6))
-        #     plt.imshow(chunk_data, aspect="auto", cmap=cmap, norm=norm)
-        #     plt.colorbar(label="Activation Level", ticks=[p25, p50, p75])
-        #     plt.title(f"Heatmap - Layer {layer_idx} (Probability {start_node}-{end_node})")
-        #     plt.xlabel("Node #")
-        #     plt.ylabel("Ignore this axis")
-
-        #     # Save the figure to the PDF
-        #     pdf.savefig()
-        #     plt.close()  # Close the plot to free memory
+        plt.close()
 
 
 print("finished")
