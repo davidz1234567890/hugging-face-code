@@ -131,26 +131,44 @@ with PdfPages(pdf_filename) as pdf:
 
         print(node_sums.shape)
 
-        # Define boundaries for activation categories
+        # Reshape node_sums to desired 2D shape (e.g., 32 x 128)
+        heatmap_shape = (32, 128)  # Example: 32 rows, 128 columns
+        node_sums_reshaped = node_sums.reshape(heatmap_shape)  # Reshape to desired format
+
+        # Plot heatmap with custom colormap
         boundaries = [vmin, p25, p50, p75, vmax]
         norm = BoundaryNorm(boundaries, cmap.N)
-        num_chunks = num_nodes // chunk_size  # 8 chunks per layer
-        for chunk_idx in range(num_chunks):
-            start_node = chunk_idx * chunk_size
-            end_node = start_node + chunk_size
-            chunk_data = node_sums[:,start_node:end_node]  # Select subset of nodes
+        plt.figure(figsize=(12, 6))
+        plt.imshow(node_sums_reshaped, aspect="auto", cmap=cmap, norm=norm)
+        plt.colorbar(label="Probability", ticks=[p25, p50, p75])
+        plt.title(f"Heatmap - Layer {layer_idx}")
+        plt.xlabel("Node Col")
+        plt.ylabel("Node Row")
 
-            # Plot heatmap with custom colormap
-            plt.figure(figsize=(12, 6))
-            plt.imshow(chunk_data, aspect="auto", cmap=cmap, norm=norm)
-            plt.colorbar(label="Activation Level", ticks=[p25, p50, p75])
-            plt.title(f"Heatmap - Layer {layer_idx} (Probability {start_node}-{end_node})")
-            plt.xlabel("Node #")
-            plt.ylabel("Ignore this axis")
+        # Save the figure to the PDF
+        pdf.savefig()
+        plt.close()  # Close the plot to free memory
 
-            # Save the figure to the PDF
-            pdf.savefig()
-            plt.close()  # Close the plot to free memory
+        # Define boundaries for activation categories
+        # boundaries = [vmin, p25, p50, p75, vmax]
+        # norm = BoundaryNorm(boundaries, cmap.N)
+        # num_chunks = num_nodes // chunk_size  
+        # for chunk_idx in range(num_chunks):
+        #     start_node = chunk_idx * chunk_size
+        #     end_node = start_node + chunk_size
+        #     chunk_data = node_sums[:,start_node:end_node]  # Select subset of nodes
+
+        #     # Plot heatmap with custom colormap
+        #     plt.figure(figsize=(12, 6))
+        #     plt.imshow(chunk_data, aspect="auto", cmap=cmap, norm=norm)
+        #     plt.colorbar(label="Activation Level", ticks=[p25, p50, p75])
+        #     plt.title(f"Heatmap - Layer {layer_idx} (Probability {start_node}-{end_node})")
+        #     plt.xlabel("Node #")
+        #     plt.ylabel("Ignore this axis")
+
+        #     # Save the figure to the PDF
+        #     pdf.savefig()
+        #     plt.close()  # Close the plot to free memory
 
 
 print("finished")
